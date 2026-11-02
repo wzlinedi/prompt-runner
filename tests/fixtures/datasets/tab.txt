@@ -1,0 +1,6 @@
+id	name	prompt_input	expected_result
+A1	Poland	"Selected indicators	Poland
+Population, total
+36 497 495
+(2025)	View source data"	Poland has about 36.5 million inhabitants, a low unemployment rate, and "high" inflation.
+A2	Czechia	Population, 10 900 000	About 10.9 million

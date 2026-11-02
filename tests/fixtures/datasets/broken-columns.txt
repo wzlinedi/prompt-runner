@@ -1,0 +1,4 @@
+id,name,prompt_input,expected_result
+D1,Capitals,Poland, France, Germany,Warsaw
+D2,Other,A, B, C,D
+D3,Fine,"x, y",z

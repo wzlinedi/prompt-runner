@@ -1,0 +1,18 @@
+{
+  "name": "prompt-runner",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Run one prompt over a dataset, judge the answers, and read a report. Local, single user, no dependencies.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node app/server.mjs",
+    "test": "node --test \"tests/unit/**/*.test.mjs\" \"tests/contract/**/*.test.mjs\" tests/live/check.selftest.mjs",
+    "test:e2e": "node tests/e2e/run.mjs",
+    "accept": "node tests/accept/run.mjs",
+    "audit:key": "node tests/accept/run.mjs --only keyguard"
+  }
+}
