@@ -1,0 +1,4 @@
+id,name,prompt_input,expected_result
+C1,Capitals,"Poland, France, Germany","Warsaw, Paris, Berlin"
+C2,Quotes,"He said ""hello"", then left","line one
+line two"

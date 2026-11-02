@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="relay-token" content="__RELAY_TOKEN__">
+<title>Prompt Runner</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<!-- START SCREEN: the only action is New Session -->
+<section id="startScreen" class="start" aria-labelledby="startTitle">
+  <h1 id="startTitle">Prompt Runner</h1>
+  <p>Load a dataset, set the prompts, run, and read the report. Everything in a session is kept in memory only and is lost when the session ends or the page is reloaded – export the result to keep it.</p>
+  <button class="primary" id="newSession" type="button">New Session</button>
+</section>
+
+<!-- The session's header band: above both views, so that the one New Session button is also there in the report (spec FR-077) -->
+<header class="hero" id="sessionBar" hidden>
+  <div class="top"><h1>Prompt Runner</h1><button id="newSession2" class="ghost" type="button">New Session</button></div>
+  <div class="confirm" id="resetConfirm" role="alertdialog" aria-label="Start a new session" hidden>
+    The session holds data or results. Unexported results will be lost.
+    <div class="row" style="margin-top:8px"><button class="primary" id="resetYes" type="button">Start a new session</button><button id="resetNo" type="button">Cancel</button></div>
+  </div>
+  <div class="facts" id="facts" aria-label="Session"></div>
+</header>
+
+<div id="formView">
+
+<!-- APP -->
+<div id="app" hidden>
+  <div class="wrap">
+    <nav aria-label="Steps" id="stepNav"><ol class="steps" id="stepList"></ol></nav>
+
+    <div class="layout">
+      <main class="stepcards">
+        <p class="locknote" id="lockNote" role="status" hidden>Locked while you confirm the run: only “Confirm and send” and “Cancel” act.</p>
+
+        <section class="card" id="secData" aria-labelledby="hData">
+          <h2 id="hData"><span class="num">1</span>Dataset</h2>
+          <p class="sub">Columns <b>id, name, prompt_input, expected_result</b> (header in the first line). The separator (tab, semicolon, or comma) is detected automatically. Most reliable: copy the cells from a spreadsheet. Wrap values that contain commas, quotes, or line breaks in "double quotes".</p>
+          <div class="drop" id="dsDrop">Drop a file here · or choose one: <input type="file" id="dsFile" accept=".csv,.txt,.tsv" aria-label="Choose file"></div>
+          <textarea class="plain" id="dsText" aria-label="Dataset – paste text" placeholder="…or paste the text here: id,name,prompt_input,expected_result" style="margin-top:10px"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="primary" id="dsLoad" type="button">Load pasted text</button>
+            <button id="dsSample" type="button">Insert sample</button>
+          </div>
+          <div class="msg" id="dsMsg" role="status"></div>
+          <div id="dsSel" class="row" hidden></div>
+          <div id="dsPrev" class="preview"></div>
+        </section>
+
+        <section class="card" id="secMain" aria-labelledby="hMain" hidden>
+          <h2 id="hMain"><span class="num">2</span>Main prompt</h2>
+          <p class="sub">The data goes in at <span class="chip">{prompt_input}</span>. Below, the complete prompt for a row of your choice.</p>
+          <div class="editor"><div class="back" id="mainBack" aria-hidden="true"></div><textarea id="mainText" spellcheck="false" aria-label="Main prompt"></textarea></div>
+          <div class="fieldmeta"><span class="msg" id="mainMsg" role="status"></span><span class="count" id="mainCount"></span></div>
+          <div class="row" style="margin-top:10px"><label for="exRow" style="margin:0">Example of the complete prompt for row:</label><select id="exRow" style="width:auto"></select></div>
+          <div class="box" id="mainExample" style="margin-top:6px"></div>
+        </section>
+
+        <section class="card" id="secJudge" aria-labelledby="hJudge" hidden>
+          <h2 id="hJudge"><span class="num">3</span>LLM as Judge – two prompts</h2>
+          <p class="sub">Each judge uses <span class="chip">{prompt_input}</span> and <span class="chip">{output}</span> and returns a percentage and a rationale (the answer format is added by the app). The two judges add two extra requests per row, which may cost extra.</p>
+          <div class="grid">
+            <div><label for="accText">Accuracy</label><div class="editor"><div class="back" id="accBack" aria-hidden="true"></div><textarea id="accText" spellcheck="false"></textarea></div><div class="fieldmeta"><span class="msg" id="accMsg" role="status"></span><span class="count" id="accCount"></span></div></div>
+            <div><label for="compText">Completeness</label><div class="editor"><div class="back" id="compBack" aria-hidden="true"></div><textarea id="compText" spellcheck="false"></textarea></div><div class="fieldmeta"><span class="msg" id="compMsg" role="status"></span><span class="count" id="compCount"></span></div></div>
+          </div>
+          <details style="margin-top:10px" id="judgePreview"><summary>Preview of the judges' input for the chosen row</summary>
+            <h3>Accuracy</h3><div class="box" id="accPrev"></div>
+            <h3>Completeness</h3><div class="box" id="compPrev"></div>
+            <h3>Added by the app to every judge prompt</h3><div class="box" id="formatPrev"></div>
+          </details>
+        </section>
+
+        <section class="card" id="secCfg" aria-labelledby="hCfg" hidden>
+          <h2 id="hCfg"><span class="num">4</span>Configuration</h2>
+          <div id="cfgFields">
+            <h3 style="margin-top:0">Main prompt</h3>
+            <label for="mainEp">Endpoint</label><input type="text" id="mainEp" autocomplete="off">
+            <label for="mainKey" style="margin-top:8px">API key</label><input type="password" id="mainKey" autocomplete="off">
+            <div class="msg info" id="keyHint" role="status"></div>
+            <label for="main_json" style="margin-top:8px">Model and parameters (JSON) <span class="pill na" id="mainJsonBadge"></span></label><textarea class="plain" id="main_json" spellcheck="false" style="height:150px"></textarea>
+            <h3>LLM as Judge</h3>
+            <label class="check"><input type="checkbox" id="sameModel" checked> Same model as the main prompt (same endpoint, key, and parameters)</label>
+            <div id="judgeFields" hidden style="margin-top:8px">
+              <label for="judgeEp">Endpoint</label><input type="text" id="judgeEp" autocomplete="off">
+              <label for="judgeKey" style="margin-top:8px">API key</label><input type="password" id="judgeKey" autocomplete="off">
+              <label for="judge_json" style="margin-top:8px">Model and parameters (JSON) – for both judges <span class="pill na" id="judgeJsonBadge"></span></label><textarea class="plain" id="judge_json" spellcheck="false" style="height:150px"></textarea>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="card panel" id="secRes" aria-labelledby="hRun">
+        <h2 id="hRun"><span><span class="num">5</span>Run</span><span class="pill na" id="stateBadge">not ready</span></h2>
+        <div class="confirm" id="runConfirm" role="alertdialog" aria-label="Confirm before sending" hidden>
+          <div id="confirmText"></div>
+          <div class="row" style="margin-top:8px"><button class="primary" id="confirmYes" type="button">Confirm and send</button><button id="confirmNo" type="button">Cancel</button></div>
+        </div>
+        <ul class="ready" id="ready" aria-live="polite"></ul>
+        <p class="counts" id="counts" hidden></p>
+        <div class="msg err" id="runMsg" role="alert"></div>
+        <div class="row"><button class="primary" id="run" type="button" aria-describedby="ready">Run</button><button id="stop" type="button" disabled>Stop</button></div>
+        <div class="msg info" id="phase" role="status"></div>
+        <div class="bar" aria-hidden="true"><div id="prog"></div></div>
+        <div class="bar" aria-hidden="true"><div id="prog2"></div></div>
+        <div class="row" style="margin-bottom:10px">
+          <button id="openReport" type="button" disabled>Open report</button>
+          <button id="expHtml" type="button" disabled>Export HTML</button>
+          <button id="expCsv" type="button" disabled>Export CSV</button>
+        </div>
+        <div class="rerunbox" id="rerunBox"></div>
+        <div class="msg err" id="resMsg" role="alert"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="runbar" id="runBar" role="region" aria-label="Run">
+    <button type="button" class="barstate" id="barState">not ready</button>
+    <button type="button" class="primary" id="barAction" disabled>Run</button>
+  </div>
+</div>
+</div>
+
+<!-- The report: its own view over the full width of the window (spec FR-038) -->
+<div id="reportView" hidden>
+  <div class="rv-toolbar"><button id="rvBack" type="button" class="primary">Back to the form</button><button id="rvHtml" type="button">Export HTML</button><button id="rvCsv" type="button">Export CSV</button><div class="rerunbox" id="rvRerunBox"></div></div>
+  <div id="report" class="rpt"></div>
+</div>
+<script type="module" src="/src/main.mjs"></script>
+</body>
+</html>
