@@ -1,0 +1,497 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Report – Prompt Runner</title><style>
+:root{--bg:#f4f6fb;--surface:#fff;--surface2:#f8f9fd;--text:#141a2a;--muted:#5a6479;--line:#e2e6f0;--accent:#4f46e5;--accent-soft:#eceafd;
+--good:#0d7a4a;--goodbg:#dff5e9;--mid:#8a5300;--midbg:#fff0d1;--low:#b42318;--lowbg:#fde4e1;--shadow:0 1px 2px rgba(20,26,42,.06),0 8px 24px rgba(20,26,42,.06);
+--insbg:#d4f3df;--delbg:#fbdad6;--delfg:#8a1c12;--hero1:#312e81;--hero2:#4f46e5;--hero3:#7c3aed}
+@media(prefers-color-scheme:dark){:root{--bg:#0d111c;--surface:#151b2b;--surface2:#1a2133;--text:#e8ecf6;--muted:#a1abc2;--line:#2a3350;--accent:#9aa5ff;--accent-soft:#232a52;
+--good:#6fdca0;--goodbg:#143525;--mid:#f3c46c;--midbg:#3a2d10;--low:#ff9d93;--lowbg:#3d1c1a;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+--insbg:#14402a;--delbg:#4a1f1b;--delfg:#ffb4ab;--hero1:#1e1b4b;--hero2:#312e81;--hero3:#4c1d95}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Inter,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+.hero{background:linear-gradient(120deg,var(--hero1),var(--hero2) 55%,var(--hero3));color:#fff;padding:28px 32px 70px}
+.hero h1{margin:0;font-size:26px;letter-spacing:-.01em}.hero p{margin:4px 0 0;opacity:.85;font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.meta span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:3px 12px;border-radius:99px;font-size:13px}
+main{padding:0 32px 48px;margin-top:-48px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;gap:16px;align-items:center;box-shadow:var(--shadow)}
+.kpi-t{font-weight:650;font-size:16px}.kpi-s{color:var(--muted);font-size:13px}.big{font-size:44px;font-weight:700;color:var(--accent);line-height:1;min-width:64px;text-align:center}
+.ring{--c:var(--accent);border-radius:50%;display:grid;place-items:center;position:relative;flex:none;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line) 0)}
+.ring::before{content:"";position:absolute;inset:var(--t,9px);background:var(--surface);border-radius:50%}
+.ring span{position:relative;font-weight:700}.ring small{font-size:.6em;font-weight:600}
+.ring.lg{width:76px;height:76px;--t:9px;font-size:20px}.ring.md{width:60px;height:60px;--t:7px;font-size:15px}.ring.sm{width:46px;height:46px;--t:6px;font-size:13px}
+.ring.good{--c:var(--good)}.ring.mid{--c:#d98a00}.ring.low{--c:var(--low)}.ring.na{background:var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:24px}
+.card h2,.sec-t{margin:0 0 14px;font-size:17px;letter-spacing:-.005em}
+table{width:100%;border-collapse:collapse}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}tr:last-child td{border-bottom:0}tr.avg td{font-weight:700;background:var(--surface2)}
+td a{color:var(--text);text-decoration:none;font-weight:550}td a:hover{color:var(--accent)}
+td.r,th.r{text-align:right}.params{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}code{font:13px ui-monospace,Menlo,monospace;background:var(--surface2);padding:1px 6px;border-radius:6px}
+.chip{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:12px;border-radius:7px;padding:1px 7px;margin-right:4px}.chip.lg{font-size:14px;padding:3px 10px;margin:0}
+.sc{display:flex;align-items:center;gap:10px}.bar{flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden;min-width:60px}.bar i{display:block;height:100%;border-radius:99px}
+.bar i.good{background:var(--good)}.bar i.mid{background:#d98a00}.bar i.low{background:var(--low)}
+.pill{display:inline-block;min-width:52px;text-align:center;font-weight:650;font-size:13px;border-radius:99px;padding:2px 10px;white-space:nowrap}
+.pill.good{background:var(--goodbg);color:var(--good)}.pill.mid{background:var(--midbg);color:var(--mid)}.pill.low,.pill.err{background:var(--lowbg);color:var(--low)}.pill.na{background:var(--surface2);color:var(--muted)}
+details>summary{cursor:pointer;font-weight:600;color:var(--accent);list-style:none}details>summary::before{content:"▸ ";}details[open]>summary::before{content:"▾ "}
+details h4{margin:16px 0 6px;font-size:13px;color:var(--muted)}details pre,.box{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:12px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;margin:0}
+.box{display:block}
+.case{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:22px;overflow:hidden}
+.case>header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 20px;background:linear-gradient(180deg,var(--surface2),var(--surface));border-bottom:1px solid var(--line)}
+.case h3{margin:0;font-size:18px;flex:1;min-width:200px}.badges{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.main{display:grid;grid-template-columns:minmax(0,26fr) minmax(0,19fr) minmax(0,19fr) minmax(0,8fr) minmax(0,28fr);gap:0}
+.field{padding:14px 16px;border-right:1px solid var(--line);min-width:0}.field:last-child{border-right:0}
+.fl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px}.fl em{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
+.scroll{max-height:17em;overflow:auto;resize:vertical;white-space:pre-wrap;word-wrap:break-word;font-size:14px;border-radius:8px}.scroll.mono{font:12px/1.45 ui-monospace,Menlo,monospace;background:var(--surface2);border:1px dashed var(--line);padding:8px}
+.scroll.rat{max-height:9em;font-size:13.5px}.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ins{background:var(--insbg);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;border-radius:3px}del{background:var(--delbg);color:var(--delfg);text-decoration:line-through;border-radius:3px}
+.f-sim{display:flex;flex-direction:column;align-items:flex-start}
+.tag{display:inline-block;background:var(--surface2);border:1px solid var(--line);border-radius:99px;padding:1px 10px;font-size:12px;color:var(--muted)}
+.alert{background:var(--lowbg);color:var(--low);border-radius:10px;padding:10px 12px;font-size:14px}
+.judges{border-top:1px solid var(--line);background:var(--surface2)}
+.jh,.metric{display:grid;grid-template-columns:130px 90px minmax(0,1fr);gap:14px;align-items:start;padding:10px 20px}
+.jh{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;padding-bottom:2px}
+.metric{border-top:1px solid var(--line)}.m-name{font-weight:650}
+.foot{color:var(--muted);font-size:13px;text-align:center;margin-top:8px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.card{overflow-x:auto}.bar{display:none}.sc{justify-content:flex-start}.hero,main{padding-left:16px;padding-right:16px}.main{display:block}.field{border-right:0;border-bottom:1px solid var(--line)}
+.fl{display:flex}.jh{display:none}.metric{grid-template-columns:1fr;gap:6px}.kpis{grid-template-columns:1fr}.f-sim{flex-direction:row;align-items:center;gap:12px}}
+</style></head><body>
+<div class="hero"><h1>Prompt Runner report</h1><p>Example with simulated data – a proposal of a modern layout. Same content and rules as the report in the specification.</p>
+<div class="meta"><span>Generated 2026-11-01 14:25:00 (UTC+01:00)</span><span>6 test cases</span><span>Model nvidia/nemotron-3.5-bolt-e4b</span><span>Judges: same model</span></div></div>
+<main><section class="kpis" aria-label="Averages"><div class="kpi"><div class="ring lg mid" style="--p:66"><span>66<small>%</small></span></div><div><div class="kpi-t">Similarity</div><div class="kpi-s">average over rows with a value</div></div></div><div class="kpi"><div class="ring lg good" style="--p:95"><span>95<small>%</small></span></div><div><div class="kpi-t">Accuracy</div><div class="kpi-s">average judge score</div></div></div><div class="kpi"><div class="ring lg low" style="--p:49"><span>49<small>%</small></span></div><div><div class="kpi-t">Completeness</div><div class="kpi-s">average judge score</div></div></div><div class="kpi stat"><div class="big">6</div><div><div class="kpi-t">Test cases</div><div class="kpi-s">1 failed &middot; 1 without expected result</div></div></div></section>
+<section class="card"><h2>Summary</h2><table><thead><tr><th>Test case</th><th>Similarity</th><th>Accuracy</th><th>Completeness</th></tr></thead><tbody><tr><td><a href="#case-0"><span class="chip">PL</span> Poland</a></td><td><div class="sc"><span class="bar"><i class="mid" style="width:59%"></i></span><span class="pill mid">59%</span></div></td><td><div class="sc"><span class="bar"><i class="good" style="width:100%"></i></span><span class="pill good">100%</span></div></td><td><div class="sc"><span class="bar"><i class="mid" style="width:56%"></i></span><span class="pill mid">56%</span></div></td></tr><tr><td><a href="#case-1"><span class="chip">CZ</span> Czechia (example)</a></td><td><div class="sc"><span class="bar"><i class="mid" style="width:70%"></i></span><span class="pill mid">70%</span></div></td><td><div class="sc"><span class="bar"><i class="good" style="width:89%"></i></span><span class="pill good">89%</span></div></td><td><div class="sc"><span class="bar"><i class="mid" style="width:50%"></i></span><span class="pill mid">50%</span></div></td></tr><tr><td><a href="#case-2"><span class="chip">SK</span> Slovakia (example)</a></td><td><div class="sc"><span class="bar"><i class="mid" style="width:71%"></i></span><span class="pill mid">71%</span></div></td><td><div class="sc"><span class="bar"><i class="good" style="width:100%"></i></span><span class="pill good">100%</span></div></td><td><div class="sc"><span class="bar"><i class="mid" style="width:50%"></i></span><span class="pill mid">50%</span></div></td></tr><tr><td><a href="#case-3"><span class="chip">HU</span> Hungary (example, rate limit)</a></td><td><div class="sc"><span class="pill na">–</span></div></td><td><div class="sc"><span class="pill na">–</span></div></td><td><div class="sc"><span class="pill na">–</span></div></td></tr><tr><td><a href="#case-4"><span class="chip">DE</span> Germany (example, no expected result)</a></td><td><div class="sc"><span class="pill na">no expected result</span></div></td><td><div class="sc"><span class="pill err">error</span></div></td><td><div class="sc"><span class="bar"><i class="low" style="width:33%"></i></span><span class="pill low">33%</span></div></td></tr><tr><td><a href="#case-5"><span class="chip">LT</span> Lithuania (example, long answer)</a></td><td><div class="sc"><span class="bar"><i class="mid" style="width:63%"></i></span><span class="pill mid">63%</span></div></td><td><div class="sc"><span class="bar"><i class="good" style="width:90%"></i></span><span class="pill good">90%</span></div></td><td><div class="sc"><span class="bar"><i class="mid" style="width:55%"></i></span><span class="pill mid">55%</span></div></td></tr><tr class="avg"><td>Average</td><td><div class="sc"><span class="bar"><i class="mid" style="width:66%"></i></span><span class="pill mid">66%</span></div></td><td><div class="sc"><span class="bar"><i class="good" style="width:95%"></i></span><span class="pill good">95%</span></div></td><td><div class="sc"><span class="bar"><i class="low" style="width:49%"></i></span><span class="pill low">49%</span></div></td></tr></tbody></table></section>
+<section class="card"><h2>Prompts and models</h2><table><thead><tr><th>Prompt</th><th>Model</th><th>Parameters used</th><th class="r">Generated</th></tr></thead><tbody><tr><td>Main prompt</td><td><code>nvidia/nemotron-3.5-bolt-e4b</code></td><td class="params">temperature=1, top_p=0.95, max_tokens=4096, seed=42, enable_thinking=true</td><td class="r">2026-11-01 14:24:57</td></tr><tr><td>Judge – Accuracy</td><td><code>nvidia/nemotron-3.5-bolt-e4b</code></td><td class="params">temperature=1, top_p=0.95, max_tokens=4096, seed=42, enable_thinking=true</td><td class="r">2026-11-01 14:24:59</td></tr><tr><td>Judge – Completeness</td><td><code>nvidia/nemotron-3.5-bolt-e4b</code></td><td class="params">temperature=1, top_p=0.95, max_tokens=4096, seed=42, enable_thinking=true</td><td class="r">2026-11-01 14:24:59</td></tr></tbody></table></section>
+<section class="card"><details><summary>Prompts used (archive)</summary><h4>Main prompt</h4><div class="box">Summarize below data.
+
+Highlight key points and ignore less important.
+
+{prompt_input}</div><h4>Judge – Accuracy</h4><div class="box">You are a meticulous QA reviewer. Check the ACCURACY of a model's output against the source data it was given.
+
+SOURCE DATA (the only ground truth):
+{prompt_input}
+
+MODEL OUTPUT:
+{output}
+
+Instructions:
+1. Extract every verifiable fact from the MODEL OUTPUT: numbers, percentages, dates, names, comparisons and trends (for example &quot;high&quot;, &quot;low&quot;, &quot;rising&quot;).
+2. Check each fact against the SOURCE DATA only. Do not use outside knowledge.
+3. Give each fact one verdict:
+   - CORRECT: matches the source (rounding is acceptable, for example 36.5 million for 36 497 495);
+   - INCORRECT: contradicts the source, or mixes up a value, unit or period (state the correct value);
+   - UNSUPPORTED: not found in the source.
+4. Judge qualitative wording by whether it is a fair reading of the numbers.
+5. Do not penalise facts that are missing from the output; omissions are not accuracy errors.
+
+Report:
+- A list of the facts checked, each with its verdict and the matching source value.
+- An overall accuracy percentage: CORRECT facts divided by all facts checked, times 100.
+- One or two sentences on the main problems, if any.</div><h4>Judge – Completeness</h4><div class="box">You are a meticulous QA reviewer. Check the COMPLETENESS of a model's output: how much of the source data it covers.
+
+SOURCE DATA:
+{prompt_input}
+
+MODEL OUTPUT:
+{output}
+
+Instructions:
+1. List every distinct fact in the SOURCE DATA; each indicator with its value counts as one fact.
+2. For each fact, check whether the MODEL OUTPUT mentions it with the same value (rounding is acceptable).
+3. Mark each fact PRESENT or MISSING. If a fact is mentioned with a wrong value, mark it PRESENT and add a short note; accuracy is judged separately.
+4. Do not judge style, length or the wording of the output.
+
+Report:
+- A list of the facts that appear in the output (PRESENT).
+- A list of the facts that do not appear (MISSING).
+- An overall completeness percentage: PRESENT facts divided by all facts in the source, times 100.</div></details></details></section>
+<h2 class="sec-t" style="margin-left:4px">Results</h2>
+<article class="case" id="case-0"><header><span class="chip lg">PL</span><h3>Poland</h3><div class="badges"><span>Similarity <span class="pill mid">59%</span></span><span>Accuracy <span class="pill good">100%</span></span><span>Completeness <span class="pill mid">56%</span></span></div></header><div class="main"><div class="field f-in" data-label="Prompt input"><div class="fl">Prompt input<em>1649 characters</em></div><div class="scroll mono" tabindex="0" role="region" aria-label="Prompt input of PL – Poland">Selected indicators	Poland	Source dataset
+Population on 1 January
+(absolute number)	36 497 495
+(2025)	View source data
+Youth population (15 - 29 years)
+(as percentage of the total population)	15.4%
+(2025)	View source data
+First time asylum applicants
+(absolute number)	11 155
+(2025)	View source data
+Gender pay gap
+(as percentage of average gross hourly earnings of men; unadjusted)	4.0%
+(2024)	View source data
+Minimum wage
+(Euro per month)	1 139€
+(2026-S1)	View source data
+People at risk of poverty or social exclusion
+(as percentage of the population)	15.0%
+(2025)	View source data
+Early school leavers
+(as percentage of the population aged 18 - 24)	4.0%
+(2025)	View source data
+Inflation rate
+(percentage change compared to previous year)	3.3%
+(2025)	View source data
+Unemployment rate
+(as percentage of the labour force aged 15 - 74 years)	3.1%
+(2025)	View source data
+Youth unemployment rate
+(percentage of labour force aged less than 25)	12.2%
+(2025)	View source data
+GDP per capita
+(Euro per inhabitant)	17 210€
+(2025)	View source data
+Government gross debt
+(as percentage of GDP)	59.6%
+(2025)	View source data
+Government deficit / surplus
+(as percentage of GDP)	-7.2%
+(2025)	View source data
+Greenhouse gas emissions
+(Tonnes per capita)	9.3
+(2024)	View source data
+Renewable energy
+(as percentage in gross final energy consumption)	18.7%
+(2025)	View source data
+Electricity prices
+(Euro per MWh, incl. taxes)	255.9€
+(2025-S1)	View source data
+Energy imports dependency
+(percentage of gross available energy)	45.7%
+(2024)	View source data
+Recycling rate of municipal waste
+(percentage of total municipal waste)	31.1%
+(2024)	View source data</div></div><div class="field f-exp" data-label="Expected result"><div class="fl">Expected result</div><div class="scroll" tabindex="0" role="region" aria-label="Expected result of PL – Poland">Poland has about 36.5 million inhabitants, 15.4% of them aged 15-29. Unemployment is low at 3.1%, but youth unemployment is 12.2%. The minimum wage is 1 139 EUR per month and the gender pay gap is 4.0%. GDP per capita is 17 210 EUR and inflation is 3.3%; government debt is 59.6% of GDP with a deficit of 7.2%. Renewables cover 18.7% of final energy consumption, emissions are 9.3 tonnes per capita and 45.7% of energy is imported.</div></div><div class="field f-act" data-label="Actual output"><div class="fl">Actual output</div><div class="scroll" tabindex="0" role="region" aria-label="Actual output of PL – Poland">Poland (36.5 million people) has a low unemployment rate of 3.1%, though youth unemployment is higher at 12.2%. The minimum wage is 1 139 EUR and the gender pay gap is 4.0%. GDP per capita is 17 210 EUR, inflation is 3.3%, and government debt is 59.6% of GDP with a deficit of 7.2%. Renewables supply 18.7% of energy.</div></div><div class="field f-sim" data-label="Similarity"><div class="fl">Similarity</div><div class="ring md mid" style="--p:59"><span>59<small>%</small></span></div></div><div class="field f-diff" data-label="Differences"><div class="fl">Differences</div><div class="scroll" tabindex="0" role="region" aria-label="Differences of PL – Poland">Poland <ins>(36.5 million people) </ins>has <del>about 36.5 million inhabitants, 15.4% </del><ins>a low unemployment rate </ins>of <del>them aged 15-29. Unemployment is low at </del>3.1%, <del>but </del><ins>though </ins>youth unemployment is <ins>higher at </ins>12.2%. The minimum wage is 1 139 EUR <del>per month </del>and the gender pay gap is 4.0%. GDP per capita is 17 210 <del>EUR and </del><ins>EUR, </ins>inflation is <del>3.3%; </del><ins>3.3%, and </ins>government debt is 59.6% of GDP with a deficit of 7.2%. Renewables <del>cover </del><ins>supply </ins>18.7% of <del>final energy consumption, emissions are 9.3 tonnes per capita and 45.7% of energy is imported.</del><ins>energy.</ins></div></div></div><div class="judges"><div class="jh"><span>Metric</span><span>Grade</span><span>Rationale</span></div><div class="metric"><div class="m-name">Accuracy</div><div class="m-grade"><div class="ring sm good" style="--p:100"><span>100<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Accuracy rationale of PL – Poland">CORRECT (10): population 36.5 million; unemployment 3.1%; youth unemployment 12.2%; minimum wage 1 139 EUR; gender pay gap 4.0%; GDP per capita 17 210 EUR; inflation 3.3%; debt 59.6% of GDP; deficit 7.2%; renewables 18.7%.
+INCORRECT: none.
+UNSUPPORTED: none.</div></div><div class="metric"><div class="m-name">Completeness</div><div class="m-grade"><div class="ring sm mid" style="--p:56"><span>56<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Completeness rationale of PL – Poland">PRESENT (10): population; unemployment; youth unemployment; minimum wage; gender pay gap; GDP per capita; inflation; debt; deficit; renewables.
+MISSING (8): youth population 15.4%; asylum applicants 11 155; poverty risk 15.0%; early school leavers 4.0%; greenhouse gas emissions 9.3 t; electricity prices 255.9 EUR/MWh; energy import dependency 45.7%; recycling rate 31.1%.</div></div></div></article>
+<article class="case" id="case-1"><header><span class="chip lg">CZ</span><h3>Czechia (example)</h3><div class="badges"><span>Similarity <span class="pill mid">70%</span></span><span>Accuracy <span class="pill good">89%</span></span><span>Completeness <span class="pill mid">50%</span></span></div></header><div class="main"><div class="field f-in" data-label="Prompt input"><div class="fl">Prompt input<em>1648 characters</em></div><div class="scroll mono" tabindex="0" role="region" aria-label="Prompt input of CZ – Czechia (example)">Selected indicators	Czechia	Source dataset
+Population on 1 January
+(absolute number)	10 900 000
+(2025)	View source data
+Youth population (15 - 29 years)
+(as percentage of the total population)	17.2%
+(2025)	View source data
+First time asylum applicants
+(absolute number)	5 400
+(2025)	View source data
+Gender pay gap
+(as percentage of average gross hourly earnings of men; unadjusted)	11.8%
+(2024)	View source data
+Minimum wage
+(Euro per month)	826€
+(2026-S1)	View source data
+People at risk of poverty or social exclusion
+(as percentage of the population)	12.0%
+(2025)	View source data
+Early school leavers
+(as percentage of the population aged 18 - 24)	6.0%
+(2025)	View source data
+Inflation rate
+(percentage change compared to previous year)	2.5%
+(2025)	View source data
+Unemployment rate
+(as percentage of the labour force aged 15 - 74 years)	2.7%
+(2025)	View source data
+Youth unemployment rate
+(percentage of labour force aged less than 25)	9.0%
+(2025)	View source data
+GDP per capita
+(Euro per inhabitant)	22 800€
+(2025)	View source data
+Government gross debt
+(as percentage of GDP)	43.0%
+(2025)	View source data
+Government deficit / surplus
+(as percentage of GDP)	-2.0%
+(2025)	View source data
+Greenhouse gas emissions
+(Tonnes per capita)	10.5
+(2024)	View source data
+Renewable energy
+(as percentage in gross final energy consumption)	19.0%
+(2025)	View source data
+Electricity prices
+(Euro per MWh, incl. taxes)	210.0€
+(2025-S1)	View source data
+Energy imports dependency
+(percentage of gross available energy)	36.0%
+(2024)	View source data
+Recycling rate of municipal waste
+(percentage of total municipal waste)	38.0%
+(2024)	View source data</div></div><div class="field f-exp" data-label="Expected result"><div class="fl">Expected result</div><div class="scroll" tabindex="0" role="region" aria-label="Expected result of CZ – Czechia (example)">Czechia has about 10.9 million inhabitants and low unemployment of 2.7%. The gender pay gap is 11.8% and the minimum wage is 826 EUR per month. GDP per capita is 22 800 EUR, inflation is 2.5%, government debt is 43.0% of GDP with a deficit of 2.0%. Renewables cover 19.0% of final energy consumption.</div></div><div class="field f-act" data-label="Actual output"><div class="fl">Actual output</div><div class="scroll" tabindex="0" role="region" aria-label="Actual output of CZ – Czechia (example)">Czechia (10.9 million people) has a very low unemployment rate of 2.7%. The gender pay gap is 8.8% and the minimum wage is 826 EUR. GDP per capita is 22 800 EUR, inflation 2.5%, debt 43.0% of GDP with a 2.0% deficit. Renewables cover 19.0% of energy.</div></div><div class="field f-sim" data-label="Similarity"><div class="fl">Similarity</div><div class="ring md mid" style="--p:70"><span>70<small>%</small></span></div></div><div class="field f-diff" data-label="Differences"><div class="fl">Differences</div><div class="scroll" tabindex="0" role="region" aria-label="Differences of CZ – Czechia (example)">Czechia <ins>(10.9 million people) </ins>has <del>about 10.9 million inhabitants and </del><ins>a very </ins>low unemployment <ins>rate </ins>of 2.7%. The gender pay gap is <del>11.8% </del><ins>8.8% </ins>and the minimum wage is 826 <del>EUR per month. </del><ins>EUR. </ins>GDP per capita is 22 800 EUR, inflation <del>is </del>2.5%, <del>government </del>debt <del>is </del>43.0% of GDP with a <del>deficit of 2.0%. </del><ins>2.0% deficit. </ins>Renewables cover 19.0% of <del>final energy consumption.</del><ins>energy.</ins></div></div></div><div class="judges"><div class="jh"><span>Metric</span><span>Grade</span><span>Rationale</span></div><div class="metric"><div class="m-name">Accuracy</div><div class="m-grade"><div class="ring sm good" style="--p:89"><span>89<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Accuracy rationale of CZ – Czechia (example)">CORRECT (8): population 10.9 million; unemployment 2.7%; minimum wage 826 EUR; GDP per capita 22 800 EUR; inflation 2.5%; debt 43.0%; deficit 2.0%; renewables 19.0%.
+INCORRECT (1): gender pay gap 8.8% – source value: 11.8%.
+UNSUPPORTED: none.</div></div><div class="metric"><div class="m-name">Completeness</div><div class="m-grade"><div class="ring sm mid" style="--p:50"><span>50<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Completeness rationale of CZ – Czechia (example)">PRESENT (9): population; unemployment; gender pay gap (note: wrong value); minimum wage; GDP per capita; inflation; debt; deficit; renewables.
+MISSING (9): youth population; asylum applicants; poverty risk; early school leavers; youth unemployment; greenhouse gas emissions; electricity prices; energy import dependency; recycling rate.</div></div></div></article>
+<article class="case" id="case-2"><header><span class="chip lg">SK</span><h3>Slovakia (example)</h3><div class="badges"><span>Similarity <span class="pill mid">71%</span></span><span>Accuracy <span class="pill good">100%</span></span><span>Completeness <span class="pill mid">50%</span></span></div></header><div class="main"><div class="field f-in" data-label="Prompt input"><div class="fl">Prompt input<em>1646 characters</em></div><div class="scroll mono" tabindex="0" role="region" aria-label="Prompt input of SK – Slovakia (example)">Selected indicators	Slovakia	Source dataset
+Population on 1 January
+(absolute number)	5 400 000
+(2025)	View source data
+Youth population (15 - 29 years)
+(as percentage of the total population)	16.0%
+(2025)	View source data
+First time asylum applicants
+(absolute number)	400
+(2025)	View source data
+Gender pay gap
+(as percentage of average gross hourly earnings of men; unadjusted)	15.0%
+(2024)	View source data
+Minimum wage
+(Euro per month)	750€
+(2026-S1)	View source data
+People at risk of poverty or social exclusion
+(as percentage of the population)	16.5%
+(2025)	View source data
+Early school leavers
+(as percentage of the population aged 18 - 24)	7.0%
+(2025)	View source data
+Inflation rate
+(percentage change compared to previous year)	3.6%
+(2025)	View source data
+Unemployment rate
+(as percentage of the labour force aged 15 - 74 years)	5.2%
+(2025)	View source data
+Youth unemployment rate
+(percentage of labour force aged less than 25)	19.0%
+(2025)	View source data
+GDP per capita
+(Euro per inhabitant)	18 500€
+(2025)	View source data
+Government gross debt
+(as percentage of GDP)	60.0%
+(2025)	View source data
+Government deficit / surplus
+(as percentage of GDP)	-5.0%
+(2025)	View source data
+Greenhouse gas emissions
+(Tonnes per capita)	7.0
+(2024)	View source data
+Renewable energy
+(as percentage in gross final energy consumption)	17.0%
+(2025)	View source data
+Electricity prices
+(Euro per MWh, incl. taxes)	230.0€
+(2025-S1)	View source data
+Energy imports dependency
+(percentage of gross available energy)	60.0%
+(2024)	View source data
+Recycling rate of municipal waste
+(percentage of total municipal waste)	45.0%
+(2024)	View source data</div></div><div class="field f-exp" data-label="Expected result"><div class="fl">Expected result</div><div class="scroll" tabindex="0" role="region" aria-label="Expected result of SK – Slovakia (example)">Slovakia has about 5.4 million inhabitants. Unemployment is 5.2% and youth unemployment is high at 19.0%. The minimum wage is 750 EUR per month, GDP per capita is 18 500 EUR, inflation is 3.6% and the deficit is 5.0% of GDP with debt at 60.0%. 60.0% of energy is imported.</div></div><div class="field f-act" data-label="Actual output"><div class="fl">Actual output</div><div class="scroll" tabindex="0" role="region" aria-label="Actual output of SK – Slovakia (example)">Slovakia (5.4 million people) has unemployment of 5.2%, with youth unemployment high at 19.0%. The minimum wage is 750 EUR, GDP per capita is 18 500 EUR and inflation is 3.6%. Debt is 60.0% of GDP, the deficit is 5.0%, and 60.0% of energy is imported.</div></div><div class="field f-sim" data-label="Similarity"><div class="fl">Similarity</div><div class="ring md mid" style="--p:71"><span>71<small>%</small></span></div></div><div class="field f-diff" data-label="Differences"><div class="fl">Differences</div><div class="scroll" tabindex="0" role="region" aria-label="Differences of SK – Slovakia (example)">Slovakia <ins>(5.4 million people) </ins>has <del>about 5.4 million inhabitants. Unemployment is 5.2% and </del><ins>unemployment of 5.2%, with </ins>youth unemployment <del>is </del>high at 19.0%. The minimum wage is 750 <del>EUR per month, </del><ins>EUR, </ins>GDP per capita is 18 500 <del>EUR, </del><ins>EUR and </ins>inflation is <del>3.6% and </del><ins>3.6%. Debt is 60.0% of GDP, </ins>the deficit is <del>5.0% of GDP with debt at 60.0%. </del><ins>5.0%, and </ins>60.0% of energy is imported.</div></div></div><div class="judges"><div class="jh"><span>Metric</span><span>Grade</span><span>Rationale</span></div><div class="metric"><div class="m-name">Accuracy</div><div class="m-grade"><div class="ring sm good" style="--p:100"><span>100<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Accuracy rationale of SK – Slovakia (example)">CORRECT (9): population 5.4 million; unemployment 5.2%; youth unemployment 19.0%; minimum wage 750 EUR; GDP per capita 18 500 EUR; inflation 3.6%; debt 60.0%; deficit 5.0%; energy import dependency 60.0%.
+INCORRECT: none.
+UNSUPPORTED: none.</div></div><div class="metric"><div class="m-name">Completeness</div><div class="m-grade"><div class="ring sm mid" style="--p:50"><span>50<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Completeness rationale of SK – Slovakia (example)">PRESENT (9): population; unemployment; youth unemployment; minimum wage; GDP per capita; inflation; debt; deficit; energy import dependency.
+MISSING (9): youth population; asylum applicants; gender pay gap; poverty risk; early school leavers; greenhouse gas emissions; renewable energy; electricity prices; recycling rate.</div></div></div></article>
+<article class="case" id="case-3"><header><span class="chip lg">HU</span><h3>Hungary (example, rate limit)</h3><div class="badges"><span>Similarity <span class="pill na">–</span></span><span>Accuracy <span class="pill na">–</span></span><span>Completeness <span class="pill na">–</span></span></div></header><div class="main"><div class="field f-in" data-label="Prompt input"><div class="fl">Prompt input<em>1644 characters</em></div><div class="scroll mono" tabindex="0" role="region" aria-label="Prompt input of HU – Hungary (example, rate limit)">Selected indicators	Hungary	Source dataset
+Population on 1 January
+(absolute number)	9 600 000
+(2025)	View source data
+Youth population (15 - 29 years)
+(as percentage of the total population)	15.5%
+(2025)	View source data
+First time asylum applicants
+(absolute number)	30
+(2025)	View source data
+Gender pay gap
+(as percentage of average gross hourly earnings of men; unadjusted)	9.0%
+(2024)	View source data
+Minimum wage
+(Euro per month)	700€
+(2026-S1)	View source data
+People at risk of poverty or social exclusion
+(as percentage of the population)	18.0%
+(2025)	View source data
+Early school leavers
+(as percentage of the population aged 18 - 24)	10.0%
+(2025)	View source data
+Inflation rate
+(percentage change compared to previous year)	4.5%
+(2025)	View source data
+Unemployment rate
+(as percentage of the labour force aged 15 - 74 years)	4.4%
+(2025)	View source data
+Youth unemployment rate
+(percentage of labour force aged less than 25)	12.0%
+(2025)	View source data
+GDP per capita
+(Euro per inhabitant)	15 500€
+(2025)	View source data
+Government gross debt
+(as percentage of GDP)	73.0%
+(2025)	View source data
+Government deficit / surplus
+(as percentage of GDP)	-5.0%
+(2025)	View source data
+Greenhouse gas emissions
+(Tonnes per capita)	5.5
+(2024)	View source data
+Renewable energy
+(as percentage in gross final energy consumption)	15.0%
+(2025)	View source data
+Electricity prices
+(Euro per MWh, incl. taxes)	280.0€
+(2025-S1)	View source data
+Energy imports dependency
+(percentage of gross available energy)	55.0%
+(2024)	View source data
+Recycling rate of municipal waste
+(percentage of total municipal waste)	40.0%
+(2024)	View source data</div></div><div class="field f-exp" data-label="Expected result"><div class="fl">Expected result</div><div class="scroll" tabindex="0" role="region" aria-label="Expected result of HU – Hungary (example, rate limit)">Hungary has about 9.6 million inhabitants. Inflation is 4.5%, government debt is 73.0% of GDP with a deficit of 5.0%, and 55.0% of energy is imported.</div></div><div class="field f-act" data-label="Actual output"><div class="fl">Actual output</div><div class="alert"><b>error</b> The provider&#x27;s request limit was exceeded (rate limit). Try again.</div></div><div class="field f-sim" data-label="Similarity"><div class="fl">Similarity</div><span class="tag">–</span></div><div class="field f-diff" data-label="Differences"><div class="fl">Differences</div><span class="tag">–</span></div></div><div class="judges"><div class="jh"><span>Metric</span><span>Grade</span><span>Rationale</span></div><div class="metric"><div class="m-name">Accuracy</div><div class="m-grade"><span class="pill na">–</span></div><div class="scroll rat" tabindex="0" role="region" aria-label="Accuracy rationale of HU – Hungary (example, rate limit)">nothing to judge</div></div><div class="metric"><div class="m-name">Completeness</div><div class="m-grade"><span class="pill na">–</span></div><div class="scroll rat" tabindex="0" role="region" aria-label="Completeness rationale of HU – Hungary (example, rate limit)">nothing to judge</div></div></div></article>
+<article class="case" id="case-4"><header><span class="chip lg">DE</span><h3>Germany (example, no expected result)</h3><div class="badges"><span>Similarity <span class="pill na">no expected result</span></span><span>Accuracy <span class="pill err">error</span></span><span>Completeness <span class="pill low">33%</span></span></div></header><div class="main"><div class="field f-in" data-label="Prompt input"><div class="fl">Prompt input<em>1652 characters</em></div><div class="scroll mono" tabindex="0" role="region" aria-label="Prompt input of DE – Germany (example, no expected result)">Selected indicators	Germany	Source dataset
+Population on 1 January
+(absolute number)	83 500 000
+(2025)	View source data
+Youth population (15 - 29 years)
+(as percentage of the total population)	16.5%
+(2025)	View source data
+First time asylum applicants
+(absolute number)	230 000
+(2025)	View source data
+Gender pay gap
+(as percentage of average gross hourly earnings of men; unadjusted)	17.0%
+(2024)	View source data
+Minimum wage
+(Euro per month)	2 161€
+(2026-S1)	View source data
+People at risk of poverty or social exclusion
+(as percentage of the population)	20.0%
+(2025)	View source data
+Early school leavers
+(as percentage of the population aged 18 - 24)	12.0%
+(2025)	View source data
+Inflation rate
+(percentage change compared to previous year)	2.2%
+(2025)	View source data
+Unemployment rate
+(as percentage of the labour force aged 15 - 74 years)	3.5%
+(2025)	View source data
+Youth unemployment rate
+(percentage of labour force aged less than 25)	6.5%
+(2025)	View source data
+GDP per capita
+(Euro per inhabitant)	44 000€
+(2025)	View source data
+Government gross debt
+(as percentage of GDP)	63.0%
+(2025)	View source data
+Government deficit / surplus
+(as percentage of GDP)	-2.5%
+(2025)	View source data
+Greenhouse gas emissions
+(Tonnes per capita)	8.0
+(2024)	View source data
+Renewable energy
+(as percentage in gross final energy consumption)	22.0%
+(2025)	View source data
+Electricity prices
+(Euro per MWh, incl. taxes)	290.0€
+(2025-S1)	View source data
+Energy imports dependency
+(percentage of gross available energy)	65.0%
+(2024)	View source data
+Recycling rate of municipal waste
+(percentage of total municipal waste)	68.0%
+(2024)	View source data</div></div><div class="field f-exp" data-label="Expected result"><div class="fl">Expected result</div><span class="tag none">none</span></div><div class="field f-act" data-label="Actual output"><div class="fl">Actual output</div><div class="scroll" tabindex="0" role="region" aria-label="Actual output of DE – Germany (example, no expected result)">Germany (83.5 million people) has unemployment of 3.5% and inflation of 2.2%. GDP per capita is 44 000 EUR and the minimum wage is 2 161 EUR. Debt is 63.0% of GDP.</div></div><div class="field f-sim" data-label="Similarity"><div class="fl">Similarity</div><span class="tag">no expected result</span></div><div class="field f-diff" data-label="Differences"><div class="fl">Differences</div><span class="tag">no expected result</span></div></div><div class="judges"><div class="jh"><span>Metric</span><span>Grade</span><span>Rationale</span></div><div class="metric"><div class="m-name">Accuracy</div><div class="m-grade"><span class="pill err">error</span></div><div class="scroll rat" tabindex="0" role="region" aria-label="Accuracy rationale of DE – Germany (example, no expected result)">Unreadable judge answer: no percentage found.
+Raw answer: &quot;The output looks correct. (no percentage given)&quot;</div></div><div class="metric"><div class="m-name">Completeness</div><div class="m-grade"><div class="ring sm low" style="--p:33"><span>33<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Completeness rationale of DE – Germany (example, no expected result)">PRESENT (6): population; unemployment; inflation; GDP per capita; minimum wage; debt.
+MISSING (12): youth population; asylum applicants; gender pay gap; poverty risk; early school leavers; youth unemployment; deficit; greenhouse gas emissions; renewable energy; electricity prices; energy import dependency; recycling rate.</div></div></div></article>
+<article class="case" id="case-5"><header><span class="chip lg">LT</span><h3>Lithuania (example, long answer)</h3><div class="badges"><span>Similarity <span class="pill mid">63%</span></span><span>Accuracy <span class="pill good">90%</span></span><span>Completeness <span class="pill mid">55%</span></span></div></header><div class="main"><div class="field f-in" data-label="Prompt input"><div class="fl">Prompt input<em>1649 characters</em></div><div class="scroll mono" tabindex="0" role="region" aria-label="Prompt input of LT – Lithuania (example, long answer)">Selected indicators	Poland	Source dataset
+Population on 1 January
+(absolute number)	36 497 495
+(2025)	View source data
+Youth population (15 - 29 years)
+(as percentage of the total population)	15.4%
+(2025)	View source data
+First time asylum applicants
+(absolute number)	11 155
+(2025)	View source data
+Gender pay gap
+(as percentage of average gross hourly earnings of men; unadjusted)	4.0%
+(2024)	View source data
+Minimum wage
+(Euro per month)	1 139€
+(2026-S1)	View source data
+People at risk of poverty or social exclusion
+(as percentage of the population)	15.0%
+(2025)	View source data
+Early school leavers
+(as percentage of the population aged 18 - 24)	4.0%
+(2025)	View source data
+Inflation rate
+(percentage change compared to previous year)	3.3%
+(2025)	View source data
+Unemployment rate
+(as percentage of the labour force aged 15 - 74 years)	3.1%
+(2025)	View source data
+Youth unemployment rate
+(percentage of labour force aged less than 25)	12.2%
+(2025)	View source data
+GDP per capita
+(Euro per inhabitant)	17 210€
+(2025)	View source data
+Government gross debt
+(as percentage of GDP)	59.6%
+(2025)	View source data
+Government deficit / surplus
+(as percentage of GDP)	-7.2%
+(2025)	View source data
+Greenhouse gas emissions
+(Tonnes per capita)	9.3
+(2024)	View source data
+Renewable energy
+(as percentage in gross final energy consumption)	18.7%
+(2025)	View source data
+Electricity prices
+(Euro per MWh, incl. taxes)	255.9€
+(2025-S1)	View source data
+Energy imports dependency
+(percentage of gross available energy)	45.7%
+(2024)	View source data
+Recycling rate of municipal waste
+(percentage of total municipal waste)	31.1%
+(2024)	View source data</div></div><div class="field f-exp" data-label="Expected result"><div class="fl">Expected result</div><div class="scroll" tabindex="0" role="region" aria-label="Expected result of LT – Lithuania (example, long answer)">Poland has about 36.5 million inhabitants, 15.4% of them aged 15-29. Unemployment is low at 3.1%, but youth unemployment is 12.2%. The minimum wage is 1 139 EUR per month and the gender pay gap is 4.0%. GDP per capita is 17 210 EUR and inflation is 3.3%; government debt is 59.6% of GDP with a deficit of 7.2%. Renewables cover 18.7% of final energy consumption, emissions are 9.3 tonnes per capita and 45.7% of energy is imported.
+
+Czechia has about 10.9 million inhabitants and low unemployment of 2.7%. The gender pay gap is 11.8% and the minimum wage is 826 EUR per month. GDP per capita is 22 800 EUR, inflation is 2.5%, government debt is 43.0% of GDP with a deficit of 2.0%. Renewables cover 19.0% of final energy consumption.
+
+Slovakia has about 5.4 million inhabitants. Unemployment is 5.2% and youth unemployment is high at 19.0%. The minimum wage is 750 EUR per month, GDP per capita is 18 500 EUR, inflation is 3.6% and the deficit is 5.0% of GDP with debt at 60.0%. 60.0% of energy is imported.
+
+Poland has about 36.5 million inhabitants, 15.4% of them aged 15-29. Unemployment is low at 3.1%, but youth unemployment is 12.2%. The minimum wage is 1 139 EUR per month and the gender pay gap is 4.0%. GDP per capita is 17 210 EUR and inflation is 3.3%; government debt is 59.6% of GDP with a deficit of 7.2%. Renewables cover 18.7% of final energy consumption, emissions are 9.3 tonnes per capita and 45.7% of energy is imported.
+
+Czechia has about 10.9 million inhabitants and low unemployment of 2.7%. The gender pay gap is 11.8% and the minimum wage is 826 EUR per month. GDP per capita is 22 800 EUR, inflation is 2.5%, government debt is 43.0% of GDP with a deficit of 2.0%. Renewables cover 19.0% of final energy consumption.</div></div><div class="field f-act" data-label="Actual output"><div class="fl">Actual output</div><div class="scroll" tabindex="0" role="region" aria-label="Actual output of LT – Lithuania (example, long answer)">Poland (36.5 million people) has a low unemployment rate of 3.1%, though youth unemployment is higher at 12.2%. The minimum wage is 1 139 EUR and the gender pay gap is 4.0%. GDP per capita is 17 210 EUR, inflation is 3.3%, and government debt is 59.6% of GDP with a deficit of 7.2%. Renewables supply 18.7% of energy.
+
+Czechia (10.9 million people) has a very low unemployment rate of 2.7%. The gender pay gap is 8.8% and the minimum wage is 826 EUR. GDP per capita is 22 800 EUR, inflation 2.5%, debt 43.0% of GDP with a 2.0% deficit. Renewables cover 19.0% of energy.
+
+Slovakia (5.4 million people) has unemployment of 5.2%, with youth unemployment high at 19.0%. The minimum wage is 750 EUR, GDP per capita is 18 500 EUR and inflation is 3.6%. Debt is 60.0% of GDP, the deficit is 5.0%, and 60.0% of energy is imported.
+
+Poland (36.5 million people) has a low unemployment rate of 3.1%, though youth unemployment is higher at 12.2%. The minimum wage is 1 139 EUR and the gender pay gap is 4.0%. GDP per capita is 17 210 EUR, inflation is 3.3%, and government debt is 59.6% of GDP with a deficit of 7.2%. Renewables supply 18.7% of energy.
+
+Czechia (10.9 million people) has a very low unemployment rate of 2.7%. The gender pay gap is 8.8% and the minimum wage is 826 EUR. GDP per capita is 22 800 EUR, inflation 2.5%, debt 43.0% of GDP with a 2.0% deficit. Renewables cover 19.0% of energy.</div></div><div class="field f-sim" data-label="Similarity"><div class="fl">Similarity</div><div class="ring md mid" style="--p:63"><span>63<small>%</small></span></div></div><div class="field f-diff" data-label="Differences"><div class="fl">Differences</div><div class="scroll" tabindex="0" role="region" aria-label="Differences of LT – Lithuania (example, long answer)">Poland <ins>(36.5 million people) </ins>has <del>about 36.5 million inhabitants, 15.4% </del><ins>a low unemployment rate </ins>of <del>them aged 15-29. Unemployment is low at </del>3.1%, <del>but </del><ins>though </ins>youth unemployment is <ins>higher at </ins>12.2%. The minimum wage is 1 139 EUR <del>per month </del>and the gender pay gap is 4.0%. GDP per capita is 17 210 <del>EUR and </del><ins>EUR, </ins>inflation is <del>3.3%; </del><ins>3.3%, and </ins>government debt is 59.6% of GDP with a deficit of 7.2%. Renewables <del>cover </del><ins>supply </ins>18.7% of <del>final energy consumption, emissions are 9.3 tonnes per capita and 45.7% of energy is imported.
+
+</del><ins>energy.
+
+</ins>Czechia <ins>(10.9 million people) </ins>has <del>about 10.9 million inhabitants and </del><ins>a very </ins>low unemployment <ins>rate </ins>of 2.7%. The gender pay gap is <del>11.8% </del><ins>8.8% </ins>and the minimum wage is 826 <del>EUR per month. </del><ins>EUR. </ins>GDP per capita is 22 800 EUR, inflation <del>is </del>2.5%, <del>government </del>debt <del>is </del>43.0% of GDP with a <del>deficit of 2.0%. </del><ins>2.0% deficit. </ins>Renewables cover 19.0% of <del>final energy consumption.
+
+</del><ins>energy.
+
+</ins>Slovakia <ins>(5.4 million people) </ins>has <del>about 5.4 million inhabitants. Unemployment is 5.2% and </del><ins>unemployment of 5.2%, with </ins>youth unemployment <del>is </del>high at 19.0%. The minimum wage is 750 <del>EUR per month, </del><ins>EUR, </ins>GDP per capita is 18 500 <del>EUR, </del><ins>EUR and </ins>inflation is <del>3.6% and </del><ins>3.6%. Debt is 60.0% of GDP, </ins>the deficit is <del>5.0% of GDP with debt at 60.0%. </del><ins>5.0%, and </ins>60.0% of energy is imported.
+
+Poland <ins>(36.5 million people) </ins>has <del>about 36.5 million inhabitants, 15.4% </del><ins>a low unemployment rate </ins>of <del>them aged 15-29. Unemployment is low at </del>3.1%, <del>but </del><ins>though </ins>youth unemployment is <ins>higher at </ins>12.2%. The minimum wage is 1 139 EUR <del>per month </del>and the gender pay gap is 4.0%. GDP per capita is 17 210 <del>EUR and </del><ins>EUR, </ins>inflation is <del>3.3%; </del><ins>3.3%, and </ins>government debt is 59.6% of GDP with a deficit of 7.2%. Renewables <del>cover </del><ins>supply </ins>18.7% of <del>final energy consumption, emissions are 9.3 tonnes per capita and 45.7% of energy is imported.
+
+</del><ins>energy.
+
+</ins>Czechia <ins>(10.9 million people) </ins>has <del>about 10.9 million inhabitants and </del><ins>a very </ins>low unemployment <ins>rate </ins>of 2.7%. The gender pay gap is <del>11.8% </del><ins>8.8% </ins>and the minimum wage is 826 <del>EUR per month. </del><ins>EUR. </ins>GDP per capita is 22 800 EUR, inflation <del>is </del>2.5%, <del>government </del>debt <del>is </del>43.0% of GDP with a <del>deficit of 2.0%. </del><ins>2.0% deficit. </ins>Renewables cover 19.0% of <del>final energy consumption.</del><ins>energy.</ins></div></div></div><div class="judges"><div class="jh"><span>Metric</span><span>Grade</span><span>Rationale</span></div><div class="metric"><div class="m-name">Accuracy</div><div class="m-grade"><div class="ring sm good" style="--p:90"><span>90<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Accuracy rationale of LT – Lithuania (example, long answer)">CORRECT (10): population 36.5 million; unemployment 3.1%; youth unemployment 12.2%; minimum wage 1 139 EUR; gender pay gap 4.0%; GDP per capita 17 210 EUR; inflation 3.3%; debt 59.6% of GDP; deficit 7.2%; renewables 18.7%.
+INCORRECT: none.
+UNSUPPORTED: none.
+CORRECT (10): population 36.5 million; unemployment 3.1%; youth unemployment 12.2%; minimum wage 1 139 EUR; gender pay gap 4.0%; GDP per capita 17 210 EUR; inflation 3.3%; debt 59.6% of GDP; deficit 7.2%; renewables 18.7%.
+INCORRECT: none.
+UNSUPPORTED: none.
+CORRECT (10): population 36.5 million; unemployment 3.1%; youth unemployment 12.2%; minimum wage 1 139 EUR; gender pay gap 4.0%; GDP per capita 17 210 EUR; inflation 3.3%; debt 59.6% of GDP; deficit 7.2%; renewables 18.7%.
+INCORRECT: none.
+UNSUPPORTED: none.
+CORRECT (10): population 36.5 million; unemployment 3.1%; youth unemployment 12.2%; minimum wage 1 139 EUR; gender pay gap 4.0%; GDP per capita 17 210 EUR; inflation 3.3%; debt 59.6% of GDP; deficit 7.2%; renewables 18.7%.
+INCORRECT: none.
+UNSUPPORTED: none.</div></div><div class="metric"><div class="m-name">Completeness</div><div class="m-grade"><div class="ring sm mid" style="--p:55"><span>55<small>%</small></span></div></div><div class="scroll rat" tabindex="0" role="region" aria-label="Completeness rationale of LT – Lithuania (example, long answer)">PRESENT (10): population; unemployment; youth unemployment; minimum wage; gender pay gap; GDP per capita; inflation; debt; deficit; renewables.
+MISSING (8): youth population 15.4%; asylum applicants 11 155; poverty risk 15.0%; early school leavers 4.0%; greenhouse gas emissions 9.3 t; electricity prices 255.9 EUR/MWh; energy import dependency 45.7%; recycling rate 31.1%.
+PRESENT (10): population; unemployment; youth unemployment; minimum wage; gender pay gap; GDP per capita; inflation; debt; deficit; renewables.
+MISSING (8): youth population 15.4%; asylum applicants 11 155; poverty risk 15.0%; early school leavers 4.0%; greenhouse gas emissions 9.3 t; electricity prices 255.9 EUR/MWh; energy import dependency 45.7%; recycling rate 31.1%.
+PRESENT (10): population; unemployment; youth unemployment; minimum wage; gender pay gap; GDP per capita; inflation; debt; deficit; renewables.
+MISSING (8): youth population 15.4%; asylum applicants 11 155; poverty risk 15.0%; early school leavers 4.0%; greenhouse gas emissions 9.3 t; electricity prices 255.9 EUR/MWh; energy import dependency 45.7%; recycling rate 31.1%.
+PRESENT (10): population; unemployment; youth unemployment; minimum wage; gender pay gap; GDP per capita; inflation; debt; deficit; renewables.
+MISSING (8): youth population 15.4%; asylum applicants 11 155; poverty risk 15.0%; early school leavers 4.0%; greenhouse gas emissions 9.3 t; electricity prices 255.9 EUR/MWh; energy import dependency 45.7%; recycling rate 31.1%.
+PRESENT (10): population; unemployment; youth unemployment; minimum wage; gender pay gap; GDP per capita; inflation; debt; deficit; renewables.
+MISSING (8): youth population 15.4%; asylum applicants 11 155; poverty risk 15.0%; early school leavers 4.0%; greenhouse gas emissions 9.3 t; electricity prices 255.9 EUR/MWh; energy import dependency 45.7%; recycling rate 31.1%.</div></div></div></article>
+<p class="foot">Differences: <del>struck-through words</del> exist only in the expected result, <ins>underlined words</ins> exist only in the actual output.</p></main></body></html>
