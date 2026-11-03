@@ -7,9 +7,13 @@
 
 **Try one prompt on a dataset, let an LLM judge the answers, and read the report.** A small local tool for one user: no install, no build step, no dependencies, and your API key never leaves your computer's memory.
 
-[Project page](https://wzlinedi.github.io/prompt-runner/) · [Example report](https://wzlinedi.github.io/prompt-runner/demo/report.html) · [Specification](specs/001-simple-prompt-runner/spec.md)
+[Project page](https://wzlinedi.github.io/prompt-runner/) · [Video walk-through](https://wzlinedi.github.io/prompt-runner/#demo) · [Example report](https://wzlinedi.github.io/prompt-runner/demo/report.html) · [Specification](specs/001-simple-prompt-runner/spec.md)
 
 ![The Prompt Runner form with its five steps and the run panel](docs/assets/form-light.webp)
+
+## See it work
+
+A 3.5-minute walk-through (paste data, prompts and judges, endpoint, key and model JSON, confirmation, report, and the Re-run choices) on a fake platform: [watch it on the project page](https://wzlinedi.github.io/prompt-runner/#demo), or download [demo.mp4](docs/assets/demo.mp4). To record it again after a change of the page, run `node tools/record-demo.mjs` (needs Chrome or Chromium and `ffmpeg`).
 
 ## Features
 
