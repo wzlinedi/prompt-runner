@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { startServer } from '../../app/server.mjs';
 import { SECURITY_HEADERS } from '../../app/relay.mjs';
+import { isSnapChrome, snapWarning } from '../accept/browser.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SCENARIO_TIMEOUT_MS = 240_000;
@@ -102,6 +103,7 @@ const names = (await readdir(path.join(here, 'scenarios'))).filter((f) => f.ends
   .filter((n) => !only.length || only.includes(n));
 if (!names.length) { console.error('No scenarios found.'); process.exit(2); }
 const chrome = findChrome();
+if (isSnapChrome(chrome)) console.warn(snapWarning(chrome));
 let failed = 0;
 for (const name of names) {
   const failures = await runScenario(name, chrome);

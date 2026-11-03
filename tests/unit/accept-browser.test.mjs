@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { access } from 'node:fs/promises';
-import { launchBrowser } from '../accept/browser.mjs';
+import { launchBrowser, isSnapChrome } from '../accept/browser.mjs';
 
 function fakes() {
   const log = [];
@@ -55,4 +55,53 @@ test('an ordinary close kills the browser and removes the profile', async () => 
   await browser.close();
   assert.ok(f.log.includes('kill SIGKILL'));
   await assert.rejects(access(browser.profileDir));
+});
+
+test('the snap package of Chromium is recognised by its path, by what it resolves to, and by a small launcher script', () => {
+  const nothing = () => { throw new Error('ENOENT'); };
+  assert.equal(isSnapChrome('/snap/bin/chromium', { resolve: nothing, read: nothing }), true);
+  assert.equal(isSnapChrome('/usr/bin/chromium-link', { resolve: () => '/usr/bin/snap', read: nothing }), true);
+  assert.equal(isSnapChrome('/usr/bin/chromium-browser', { resolve: (x) => x, read: () => '#!/bin/sh\nexec snap run chromium "$@"\n' }), true);
+  assert.equal(isSnapChrome('/usr/bin/google-chrome', { resolve: (x) => x, read: () => '#!/bin/sh\nexec /opt/google/chrome/chrome "$@"\n' }), false);
+  assert.equal(isSnapChrome('/usr/bin/google-chrome', { resolve: (x) => x, read: () => 'x'.repeat(5000) + ' snap ' }), false, 'a large binary is not a launcher script');
+  assert.equal(isSnapChrome('chrome', { resolve: nothing, read: nothing }), false);
+});
+
+test('launching a snap browser warns once, and an ordinary browser does not', async () => {
+  const warnings = [];
+  const snap = await launchBrowser({ chrome: '/snap/bin/chromium', ...fakes(), warn: (m) => warnings.push(m), isSnap: () => true });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /snap package of Chromium/);
+  assert.match(warnings[0], /CHROME_BIN/);
+  await snap.close();
+
+  const quiet = [];
+  const ordinary = await launchBrowser({ chrome: 'chrome', ...fakes(), warn: (m) => quiet.push(m), isSnap: () => false });
+  await ordinary.close();
+  assert.deepEqual(quiet, [], 'a browser that closed properly produced a warning');
+});
+
+test('a browser that is still running after the kill is reported, with the way to stop it', async () => {
+  const f = fakes();
+  const original = f.spawnImpl;
+  f.spawnImpl = (...args) => {
+    const child = original(...args);
+    child.pid = 4242;
+    child.kill = () => false; // the signal is refused, as a snap package does
+    return child;
+  };
+  const warnings = [];
+  const browser = await launchBrowser({ chrome: 'chrome', ...f, warn: (m) => warnings.push(m), isSnap: () => false });
+  await browser.close();
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /process 4242\) is still running/);
+  assert.match(warnings[0], /kill 4242/);
+
+  const snapWarnings = [];
+  const g = fakes();
+  const originalG = g.spawnImpl;
+  g.spawnImpl = (...args) => { const child = originalG(...args); child.pid = 77; child.kill = () => false; return child; };
+  const snapBrowser = await launchBrowser({ chrome: 'chrome', ...g, warn: (m) => snapWarnings.push(m), isSnap: () => true });
+  await snapBrowser.close();
+  assert.match(snapWarnings.at(-1), /systemctl --user stop 'snap\.chromium\.chromium-\*\.scope'/);
 });
