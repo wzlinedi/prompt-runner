@@ -1,21 +1,15 @@
 <!--
 Sync Impact Report
 ===================
-Version change: (template, unratified) → 1.0.0
-Rationale for bump: Initial ratification of the constitution. No prior governed version existed
-(file previously held only unfilled template placeholders), so this is treated as the project's
-first MAJOR.MINOR.PATCH baseline per convention (1.0.0), not an incremental amendment.
+Version change: 1.0.0 → 1.0.1
+Rationale for bump: PATCH. Corrected the path of the founding specification in the "Basis for content"
+note below: it named specs/001-prompt-model-tester/spec.md, which does not exist; the specification is
+specs/001-simple-prompt-runner/spec.md. A wording fix only: no principle, section, or governance rule
+changed.
 
-Modified principles: n/a (initial adoption)
-
-Added sections:
-  - Core Principles I–V (Security & Privacy by Default; Minimal MVP Scope; Explicit User Consent
-    & Transparency; Technology & Architecture Agnosticism; Observability & Testability of Outcomes)
-  - Data Handling & Retention (Section 2)
-  - Spec-Driven Development Workflow (Section 3)
-  - Governance (amendment procedure, versioning policy, compliance review)
-
-Removed sections: n/a (initial adoption)
+Modified principles: none
+Added sections: none
+Removed sections: none
 
 Templates requiring follow-up:
   - .specify/templates/plan-template.md — no changes required; its Constitution Check gate reads
@@ -24,13 +18,13 @@ Templates requiring follow-up:
   - .specify/templates/tasks-template.md — no changes required.
   - .specify/templates/checklist-template.md — no changes required.
 
-Deferred placeholders / TODOs: none. All template placeholders have been filled.
+Deferred placeholders / TODOs: none. No placeholder token remains in the document.
 
 Basis for content: Derived from the values already made explicit in
-specs/001-prompt-model-tester/spec.md (API key handling, MVP scope boundaries, user consent
+specs/001-simple-prompt-runner/spec.md (API key handling, MVP scope boundaries, user consent
 before sending data, provider/architecture neutrality, and testable requirements), since this is
-the only concrete feature work in the repository at ratification time. Future amendments should
-re-derive or revise principles as the project's real practices diverge from this starting point.
+the only concrete feature work in the repository. Future amendments should re-derive or revise
+principles as the project's real practices diverge from this starting point.
 -->
 
 # Speckit Test Constitution
@@ -137,4 +131,4 @@ Any complexity or deviation introduced during planning that conflicts with a pri
 be explicitly justified in that plan; unjustified deviations MUST be resolved before implementation
 proceeds.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-10-31
+**Version**: 1.0.1 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-03
