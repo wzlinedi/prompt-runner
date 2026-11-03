@@ -13,7 +13,9 @@
 
 ## See it work
 
-A 3.5-minute walk-through (paste data, prompts and judges, endpoint, key and model JSON, confirmation, report, and the Re-run choices) on a fake platform: [watch it on the project page](https://wzlinedi.github.io/prompt-runner/#demo), or download [demo.mp4](docs/assets/demo.mp4). To record it again after a change of the page, run `node tools/record-demo.mjs` (needs Chrome or Chromium and `ffmpeg`).
+A 3.5-minute narrated walk-through (paste data, prompts and judges, endpoint, key and model JSON, confirmation, report, and the Re-run choices) on a fake platform: [watch it on the project page](https://wzlinedi.github.io/prompt-runner/#demo), or download [demo.mp4](docs/assets/demo.mp4). To record it again after a change of the page, make the voice-over clips with `node tools/make-voiceover.mjs` ([Piper](https://github.com/rhasspy/piper), offline; see the comment at the top of the file) and then run `node tools/record-demo.mjs` (needs Chrome or Chromium and `ffmpeg`; without the clips the video is silent).
+
+The voice is the *en_US-libritts_r-medium* model of Piper (speaker 40), trained on [LibriTTS-R](http://www.openslr.org/141/), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ## Features
 
