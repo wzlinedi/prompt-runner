@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prompt Runner</title>
+  <meta name="description" content="Try one prompt on a dataset, let an LLM judge the answers, and read the report. A small local tool: no install, no dependencies, and your API key stays in memory.">
+  <meta name="color-scheme" content="light dark">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Prompt Runner">
+  <meta property="og:description" content="Run one prompt over a dataset, judge the answers with an LLM, and read the report. Local, single user, no dependencies.">
+  <meta property="og:image" content="https://wzlinedi.github.io/prompt-runner/assets/form-light.webp">
+  <meta property="og:url" content="https://wzlinedi.github.io/prompt-runner/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cpath d='M11 8l12 8-12 8z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <h1>Prompt Runner</h1>
+      <p class="lead">Try one prompt on a dataset, let an LLM judge the answers, and read the report. Local, one user, no dependencies.</p>
+      <ul class="chips">
+        <li>Node.js 22+</li>
+        <li>No install, no build</li>
+        <li>Key kept in memory only</li>
+        <li>MIT license</li>
+      </ul>
+      <div class="buttons">
+        <a class="btn primary" href="https://github.com/wzlinedi/prompt-runner">View on GitHub</a>
+        <a class="btn" href="demo/report.html">Example report</a>
+        <a class="btn" href="#quick-start">Quick start</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <figure class="shot frame">
+      <img src="assets/form-light.webp" width="1920" height="1080" alt="The Prompt Runner form: five steps, a dataset table, and the run panel">
+      <figcaption>The form: dataset, prompts, judges, configuration, and the run panel with everything that still blocks a run.</figcaption>
+    </figure>
+
+    <section id="what">
+      <h2>What it does</h2>
+      <p class="sub">You load a dataset, edit a main prompt, review two ready-made QA judge prompts, run everything against a model endpoint, and read an HTML report that you can export as HTML or CSV.</p>
+      <div class="grid">
+        <div class="card"><h3>Dataset in, report out</h3><p>Paste text or drop a file with <code>id</code>, <code>name</code>, <code>prompt_input</code>, <code>expected_result</code>. Up to 20 rows per run.</p></div>
+        <div class="card"><h3>Two QA judges</h3><p>Accuracy and Completeness, each with a percentage and a rationale. Both prompts are yours to edit.</p></div>
+        <div class="card"><h3>Any chat endpoint</h3><p>NVIDIA-hosted models by default; any endpoint with the same request shape works.</p></div>
+        <div class="card"><h3>You confirm first</h3><p>Before anything is sent, you see how many requests go to which endpoint and what data they hold.</p></div>
+        <div class="card"><h3>Smart re-runs</h3><p>All, only failing main prompts, all judges, or only failing judges, with the request count shown first.</p></div>
+        <div class="card"><h3>Light, dark, keyboard</h3><p>Follows your system theme, works from 500 to 1920 px, and the whole flow needs no mouse.</p></div>
+      </div>
+    </section>
+
+    <section id="how">
+      <h2>Five steps</h2>
+      <p class="sub">Press <strong>New Session</strong>, then fill the page from top to bottom.</p>
+      <ol class="steps">
+        <li><strong>Dataset</strong><span>Paste or drop your rows and tick the ones to run.</span></li>
+        <li><strong>Main prompt</strong><span>Write the prompt with <code>{prompt_input}</code> and preview it for any row.</span></li>
+        <li><strong>LLM as Judge</strong><span>Review the Accuracy and Completeness prompts that use <code>{prompt_input}</code> and <code>{output}</code>.</span></li>
+        <li><strong>Configuration</strong><span>Set the endpoint, the API key, and one JSON with the model and its parameters.</span></li>
+        <li><strong>Run</strong><span>Confirm what will be sent, and read the report when the run ends.</span></li>
+      </ol>
+    </section>
+
+    <section id="gallery">
+      <h2>The page and the report</h2>
+      <p class="sub">The report shows averages, a summary table, the prompts and models used, and one card per test case with the differences between the expected result and the actual output.</p>
+      <div class="gallery">
+        <figure class="frame tall"><img src="assets/report-light.webp" width="1920" height="1100" loading="lazy" alt="A report with similarity, accuracy and completeness averages and a test case card"><figcaption>The report in the light setting.</figcaption></figure>
+        <figure class="frame"><img src="assets/confirm-light.webp" width="1100" height="1100" loading="lazy" alt="The confirmation that lists what will be sent and where"><figcaption>Nothing is sent until you confirm.</figcaption></figure>
+        <figure class="frame"><img src="assets/report-dark.webp" width="1100" height="1100" loading="lazy" alt="The report in the dark setting"><figcaption>The report in the dark setting.</figcaption></figure>
+        <figure class="frame narrow"><img src="assets/form-mobile.webp" width="500" height="1000" loading="lazy" alt="The form on a narrow window"><figcaption>A narrow window.</figcaption></figure>
+        <figure class="frame"><img src="assets/form-dark.webp" width="1100" height="1100" loading="lazy" alt="The form in the dark setting"><figcaption>The form in the dark setting.</figcaption></figure>
+      </div>
+      <p class="note">The screenshots were taken against a fake local platform, so the model answers in them are placeholders. <a href="demo/report.html">Open the example report</a> to see a complete one.</p>
+    </section>
+
+    <section id="privacy">
+      <h2>Privacy by design</h2>
+      <p class="sub">Your key and your data go only to the endpoint you configured, through a relay that runs on your own computer.</p>
+      <div class="privacy">
+        <div class="card"><strong>0</strong><p>places where a key is written: no file, browser storage, log, URL, or export.</p></div>
+        <div class="card"><strong>127.0.0.1</strong><p>the only address the local server listens on.</p></div>
+        <div class="card"><strong>0</strong><p>dependencies. The code is plain Node.js and plain browser modules.</p></div>
+        <div class="card"><strong>Audited</strong><p><code>npm run audit:key</code> searches for a typed key in every place it could be left behind.</p></div>
+      </div>
+    </section>
+
+    <section id="quick-start">
+      <h2>Quick start</h2>
+      <p class="sub">You need <a href="https://nodejs.org/">Node.js</a> 22 or newer. Nothing else.</p>
+<pre><code>git clone https://github.com/wzlinedi/prompt-runner.git
+cd prompt-runner
+node app/server.mjs</code></pre>
+      <p>Open the address it prints (default <code>http://127.0.0.1:8787</code>), press <strong>New Session</strong>, click <strong>Insert sample</strong>, enter your API key, and run.</p>
+      <p class="note"><strong>This page is only a presentation.</strong> Prompt Runner is a local tool and cannot be hosted as a website: the relay that forwards your requests must run on your computer, so that your key never reaches a third party.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>MIT license</span>
+      <a href="https://github.com/wzlinedi/prompt-runner">Source on GitHub</a>
+      <a href="https://github.com/wzlinedi/prompt-runner/blob/main/specs/001-simple-prompt-runner/spec.md">Specification</a>
+      <a href="https://github.com/wzlinedi/prompt-runner#readme">Documentation</a>
+    </div>
+  </footer>
+</body>
+</html>
