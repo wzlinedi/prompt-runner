@@ -2,10 +2,11 @@
 // walk-through (tests/accept/): a real Chrome, real clicks and key presses, the frames taken by Chrome's own screencast.
 // No dependencies in the project. Needs Chrome or Chromium and an `ffmpeg` (set FFMPEG_BIN to its path if it is not on the PATH).
 //   node tools/record-demo.mjs [output.mp4]
-// The key typed in the video is a made-up text; the platform is a fake one, so the answers in the video are placeholders.
+// With the clips of tools/make-voiceover.mjs the video has a voice-over, and every step waits for the end of its line;
+// without them it is silent. The key typed in the video is a made-up text; the platform is a fake one, so the answers in the video are placeholders.
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { openSync, closeSync } from 'node:fs';
+import { openSync, closeSync, existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { startFake } from '../tests/fixtures/fake-upstream.mjs';
 import { launchBrowser } from '../tests/accept/browser.mjs';
 import { createDriver } from '../tests/accept/driver.mjs';
+import { NARRATION } from './demo-narration.mjs';
+import { clipPath, wavSeconds } from './make-voiceover.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.resolve(process.argv[2] ?? path.join(root, 'docs/assets/demo.mp4'));
@@ -98,152 +101,157 @@ try {
     el.hidden = !t;
   }, text);
   const typeSlowly = async (text, ms = 45) => { for (const ch of text) { await d.type(ch); await sleep(ms); } };
-  const scrollTo = (selector) => d.evaluate((s) => document.querySelector(s).scrollIntoView({ block: 'start', behavior: 'smooth' }), selector);
+
+  // `start(id)` shows the caption of a line and starts its clip; it returns the function that waits until the line has been spoken
+  // (with a short pause after it). The actions of the step run in between, so that picture and voice go together.
+  const lines = new Map(NARRATION.map((line) => [line.id, line]));
+  const voice = [];
+  const start = async (id, { minMs = 0 } = {}) => {
+    const line = lines.get(id);
+    if (!line) throw new Error(`No narration line "${id}".`);
+    await caption(line.caption);
+    const file = clipPath(line);
+    const seconds = existsSync(file) ? wavSeconds(file) : 0;
+    if (seconds > 0) voice.push({ file, startedAt: Date.now() / 1000 });
+    const endsAt = Date.now() + Math.max(seconds * 1000 + 700, minMs);
+    return () => sleep(Math.max(0, endsAt - Date.now()));
+  };
+  const speak = async (id, options) => (await start(id, options))();
+  const smoothScroll = (selector, block = 'start') => d.evaluate((sel, b) => document.querySelector(sel).scrollIntoView({ block: b, behavior: 'smooth' }), selector, block);
 
   await d.open(app.url);
   await session.send('Page.startScreencast', { format: 'jpeg', quality: 85, maxWidth: WIDTH, maxHeight: HEIGHT, everyNthFrame: 1 });
-  await sleep(500);
+  await sleep(700);
 
-  await caption('Prompt Runner: try a prompt on a dataset and let LLM judges grade the answers');
-  await sleep(3500);
-  await caption('A session starts with one button: New Session');
-  await sleep(1200);
+  await speak('intro', { minMs: 3500 });
+  let done = await start('start');
+  await sleep(1500);
   await d.click('#newSession');
-  await sleep(1800);
-
-  const smoothScroll = (selector, block = 'start') => d.evaluate((sel, b) => document.querySelector(sel).scrollIntoView({ block: b, behavior: 'smooth' }), selector, block);
+  await done();
 
   // Step 1: the dataset, from a file or pasted.
-  await caption('Step 1: the dataset. Load a CSV file (choose it, or drop it on the page), or paste the data');
+  done = await start('dataset');
   await smoothScroll('#dsDrop', 'center');
-  await sleep(5500);
-  await caption('Here: copy the cells from a spreadsheet (id, name, prompt_input, expected_result)');
-  await sleep(3500);
+  await done();
+  done = await start('copy');
   await d.click('#dsText');
   await d.clearFocused();
-  await caption('and paste them into the page');
-  await sleep(1500);
+  await done();
+  done = await start('paste');
+  await sleep(800);
   await d.paste(SPREADSHEET);
-  await sleep(3500);
+  await done();
+  await sleep(1800);
   await d.click('#dsLoad');
-  await caption('The page reads the columns and lists the rows');
-  await sleep(3500);
-  await caption('Tick the rows to run (at most 20 per run)');
+  await speak('loaded', { minMs: 3500 });
+  done = await start('tick');
   await d.click('#selNone');
-  await sleep(1500);
+  await sleep(1200);
   for (const id of ['PL', 'CZ', 'HU']) { await d.click(`input[data-select="${id}"]`); await sleep(1200); }
-  await sleep(2500);
+  await done();
 
   // Step 2: the main prompt.
-  await caption('Step 2: the main prompt. {prompt_input} is replaced by the data of each row');
+  done = await start('main');
   await smoothScroll('#secMain');
-  await sleep(6000);
+  await done();
+  await sleep(2000);
 
   // Step 3: LLM as Judge, with every option.
-  await caption('Step 3: LLM as Judge. Two ready-made prompts grade every answer of the main prompt');
+  done = await start('judges');
   await smoothScroll('#secJudge');
-  await sleep(5500);
-  await caption('Accuracy judge: checks the answer against the source data');
+  await done();
+  done = await start('accuracy');
   await smoothScroll('#accText', 'center');
-  await sleep(5000);
-  await caption('Completeness judge: how much of the source data the answer covers');
+  await done();
+  done = await start('completeness');
   await smoothScroll('#compText', 'center');
-  await sleep(5000);
-  await caption('Both prompts are yours to edit; they use {prompt_input} and {output}, and each returns a percentage and a rationale');
-  await sleep(6000);
+  await done();
+  await speak('edit', { minMs: 5000 });
   await d.evaluate(() => { document.getElementById('judgePreview').open = true; });
-  await caption('The preview shows the exact input of the judges for a chosen row');
+  done = await start('preview');
   await smoothScroll('#judgePreview');
-  await sleep(5500);
-  await caption('...and the answer format that the app adds to every judge prompt');
+  await done();
+  done = await start('format');
   await d.evaluate(() => document.getElementById('formatPrev').scrollIntoView({ block: 'center', behavior: 'smooth' }));
-  await sleep(5500);
+  await done();
   await d.evaluate(() => { document.getElementById('judgePreview').open = false; });
-  await caption('By default the judges use the same model as the main prompt');
+  done = await start('same');
   await smoothScroll('#sameModel', 'center');
-  await sleep(5000);
+  await done();
+  done = await start('own');
+  await sleep(800);
   await d.click('#sameModel');
-  await caption('Or switch that off: the judges get their own endpoint, key, and JSON');
   await smoothScroll('#judgeFields', 'center');
-  await sleep(6500);
+  await done();
+  await sleep(1500);
+  done = await start('again');
   await smoothScroll('#sameModel', 'center');
+  await sleep(1200);
   await d.click('#sameModel');
-  await caption('Switched on again: one endpoint and one key for everything');
-  await sleep(3500);
+  await done();
 
   // Step 4: configuration, with the model and its parameters as one JSON payload.
-  await caption('Step 4: configuration. First the endpoint, then the API key (masked, kept in memory only)');
+  done = await start('config');
   await smoothScroll('#secCfg');
-  await sleep(2500);
+  await sleep(2000);
   await d.click('#mainEp');
   await d.clearFocused();
   await typeSlowly(fake.endpoint, 30);
-  await sleep(1200);
+  await sleep(1000);
   await d.click('#mainKey');
   await d.clearFocused();
   await typeSlowly(FAKE_KEY, 50);
-  await sleep(2500);
-  await caption('The model and its parameters are one JSON payload. Type your own');
+  await done();
+  done = await start('json');
   await smoothScroll('#main_json', 'center');
-  await sleep(3500);
+  await sleep(1800);
   await d.click('#main_json');
   await d.clearFocused();
   await typeSlowly('{"model": "nvidia/nemotron-3.5-bolt-e4b", "temperature": 0.2, "top_p": 0.9, "max_tokens": 1024, "seed": 7}', 55);
-  await sleep(1500);
-  await caption('A badge confirms that the JSON is valid and names the model');
-  await sleep(5000);
+  await done();
+  await speak('badge', { minMs: 4500 });
 
   // Step 5: run, and the whole confirmation.
-  await caption('Step 5: Run. Nothing is sent until you confirm');
+  done = await start('run');
   await d.click('#run');
   await sleep(800);
   await d.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-  await sleep(1500);
-  await caption('The confirmation says how many requests go where, to which model, and what data they contain');
-  await sleep(9000);
-  await caption('The requests go through the local relay, which keeps nothing. Costs may apply with the provider');
-  await sleep(6500);
+  await done();
+  await speak('confirm', { minMs: 8500 });
+  await speak('relay', { minMs: 5500 });
   await d.click('#confirmYes');
-  await caption('Running: main prompts first, then the judges (a fake platform answers here)');
+  done = await start('running');
   await d.waitFor(() => !document.getElementById('reportView').hidden && document.querySelectorAll('#report .case').length > 0, { timeoutMs: 90_000, what: 'the report' });
+  await done();
   await sleep(500);
 
-  await caption('The report opens by itself: averages and a summary table');
-  await sleep(4500);
-  await caption('One card per test case: expected result, actual output, similarity, differences');
+  done = await start('report');
+  await done();
+  done = await start('cards');
   await d.evaluate(() => document.querySelector('#report .case').scrollIntoView({ block: 'start', behavior: 'smooth' }));
-  await sleep(5500);
-  await caption('Grades and rationale from each judge');
+  await done();
+  done = await start('grades');
   await d.evaluate(() => window.scrollBy({ top: 420, behavior: 'smooth' }));
-  await sleep(4000);
-  await caption('Export the report as HTML or CSV with the buttons at the top');
+  await done();
+  done = await start('export');
   await d.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-  await sleep(4500);
+  await done();
 
   // When something goes wrong (a failed request, a rate limit), nothing has to start over: the Re-run choices.
-  await caption('Something went wrong, a failed request or a rate limit? You do not have to start over: Re-run');
-  await sleep(5500);
+  await speak('rerun');
   await d.click('#rvRerunBox summary');
-  await sleep(1500);
+  await sleep(1200);
   const highlight = (index) => d.evaluate((i) => {
     const buttons = [...document.querySelectorAll('#rvRerunBox [data-rerun]')];
     buttons.forEach((b, n) => { const li = b.closest('li'); li.style.outline = n === i ? '3px solid #f59e0b' : ''; li.style.outlineOffset = '2px'; });
   }, index);
-  const choices = [
-    'Re-run all: the main prompts and the judges again, on the rows of the last run',
-    'Re-run failing main prompts and all related judges: only the rows whose main prompt failed',
-    'Re-run all judges: the one to use after you edit a judge prompt',
-    'Re-run only the failing judges: if one of ten judge requests failed, exactly one is sent',
-  ];
-  for (const [index, text] of choices.entries()) {
+  for (const [index, id] of ['rerun-all', 'rerun-main', 'rerun-judges', 'rerun-failing'].entries()) {
     await highlight(index);
-    await caption(text);
-    await sleep(6500);
+    await speak(id);
   }
   await highlight(-1);
-  await caption('Each choice shows how many requests it would send, and one that cannot be used says why');
-  await sleep(6500);
-  await caption('');
+  await speak('rerun-counts');
+  await speak('outro', { minMs: 3000 });
   await sleep(500);
 
   await session.send('Page.stopScreencast');
@@ -256,10 +264,28 @@ try {
   const listFile = path.join(work, 'frames.txt');
   await writeFile(listFile, `${list.join('\n')}\n`);
   await mkdir(path.dirname(output), { recursive: true });
-  const encoded = spawnSync(ffmpeg, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', listFile,
-    '-vf', `fps=25,scale=${WIDTH}:${HEIGHT},format=yuv420p`, '-c:v', 'libx264', '-crf', '24', '-preset', 'slow', '-movflags', '+faststart', output], { encoding: 'utf8' });
+
+  // The clips are placed where their lines started, counted from the first frame.
+  const inputs = ['-f', 'concat', '-safe', '0', '-i', listFile];
+  const filters = [`[0:v]fps=25,scale=${WIDTH}:${HEIGHT},format=yuv420p[v]`];
+  const mixed = [];
+  voice.forEach((clip, index) => {
+    const ms = Math.max(0, Math.round((clip.startedAt - frames[0].time) * 1000));
+    inputs.push('-i', clip.file);
+    filters.push(`[${index + 1}:a]adelay=${ms}|${ms}[a${index}]`);
+    mixed.push(`[a${index}]`);
+  });
+  const args = ['-y', '-loglevel', 'error', ...inputs];
+  if (mixed.length) {
+    filters.push(`${mixed.join('')}amix=inputs=${mixed.length}:normalize=0:dropout_transition=0[aout]`);
+    args.push('-filter_complex', filters.join(';'), '-map', '[v]', '-map', '[aout]', '-c:a', 'aac', '-b:a', '128k');
+  } else {
+    args.push('-filter_complex', filters.join(';'), '-map', '[v]');
+  }
+  args.push('-c:v', 'libx264', '-crf', '24', '-preset', 'slow', '-movflags', '+faststart', output);
+  const encoded = spawnSync(ffmpeg, args, { encoding: 'utf8' });
   if (encoded.status !== 0) throw new Error(`ffmpeg failed: ${encoded.stderr}`);
-  console.log(`Wrote ${output} (${frames.length} frames)`);
+  console.log(`Wrote ${output} (${frames.length} frames, ${voice.length} voice clips)`);
 } catch (error) {
   console.error(error.message);
   exitCode = 1;
