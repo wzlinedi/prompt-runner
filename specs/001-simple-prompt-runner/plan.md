@@ -34,7 +34,7 @@ A single local web page, filled in from top to bottom after **New Session**: loa
 
 **Storage**: None. All data lives in page memory for one session; the only output is a user-initiated download (HTML or CSV). No cookies, no browser storage, no files written by the relay.
 
-**Testing**: `node --test` for unit and relay contract tests; a Node script that drives headless Chrome against the relay and a fake platform for end-to-end tests; a short live check with a real key that the user runs locally with a standalone script (`tests/live/check.mjs`, already run once, so the key is never shared in a chat).
+**Testing**: `node --test` for unit and relay contract tests; a Node script that drives headless Chrome against the relay and a fake platform for end-to-end tests; a short live check with a real key that the user runs locally with a standalone script (`tests/live/check.mjs`, already run once, so the key is never shared in a chat). The unit and contract tests also run in GitHub Actions (`.github/workflows/test.yml`) on every push and pull request; the suites that need Chrome stay local.
 
 **Target Platform**: A desktop computer with Node.js 22+ and a modern browser; one user, running locally.
 
