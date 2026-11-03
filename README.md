@@ -34,6 +34,16 @@ node app/server.mjs        # or: npm start
 
 Open the address it prints (default `http://127.0.0.1:8787`; if the port is taken, a free one is used). Press **New Session**, click **Insert sample** to load five countries, enter your API key, and run.
 
+### Let an AI assistant set it up
+
+Open the cloned folder in an AI coding assistant (for example Claude Code) and paste this prompt:
+
+```text
+Set up Prompt Runner and start it for me. Check that Node.js 22+ is installed (offer to install it if not), start the app, open the page, and guide me through the five steps. I will type my API key into the page myself.
+```
+
+The assistant reads [AGENTS.md](AGENTS.md), does the setup, and opens the working page. Tests are not needed to use the tool; the assistant runs `npm test` (about 12 seconds) only if something does not start. Your part is to give the data, edit the prompts, and enter the endpoint and the API key in the page. The key is never pasted into the chat.
+
 > **This is a local tool.** It cannot be hosted as a public website: the server must run on your computer (see [How it works](#how-it-works)). The [project page](https://wzlinedi.github.io/prompt-runner/) is only a presentation.
 
 ## The five steps
