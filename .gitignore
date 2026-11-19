@@ -1,6 +1,21 @@
+# Node
 node_modules/
+
+# Test and demo output
 test-results/
-relay.log
 *.log
+
+# Secrets and local environment
 .env*
+
+# Python (Spec Kit scripts)
+__pycache__/
+*.pyc
+
+# Local Claude Code settings
+.claude/settings.local.json
+
+# Editors and OS
+.vscode/
+.idea/
 .DS_Store
